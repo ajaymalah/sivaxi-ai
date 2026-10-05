@@ -1,16 +1,22 @@
+
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Chat {
   id: string;
-  title: string;
+  project_id: string | null;
+  title: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ChatMessage {
   id: string;
+  chat_id?: string;
   role: 'user' | 'assistant';
   content: any;
+  created_at?: string;
 }
 
 export interface CreateChatResponse {
@@ -18,18 +24,21 @@ export interface CreateChatResponse {
   title: string;
   message: {
     type: string;
-    content: Array<{
-      type: string;
-      text: string;
-      extras?: {
-        signature?: string;
-      };
-    }>;
+    content: any;
   };
 }
 
+export interface MessageResponse {
+  id: string;
+  chat_id: string;
+  role: 'user' | 'assistant';
+  content: any;
+  created_at: string;
+}
+
 export interface SendMessageResponse {
-  message: ChatMessage;
+  chat_id: string;
+  message: MessageResponse;
 }
 
 @Injectable({
@@ -41,43 +50,47 @@ export class ChatService {
 
   private readonly API_URL = 'http://localhost:8000';
 
-  // Existing chats
-  getChats(): Observable<Chat[]> {
+  getChats(projectId?: string | null): Observable<Chat[]> {
+
+    let params = new HttpParams();
+
+    if (projectId) {
+      params = params.set('project_id', projectId);
+    }
+
     return this.http.get<Chat[]>(
-      `${this.API_URL}/chat`
+      `${this.API_URL}/chat`,
+      { params }
     );
   }
 
-  // First message of a NEW chat
   createChatWithMessage(
-    content: string
+    content: string,
+    projectId: string | null = null
   ): Observable<CreateChatResponse> {
 
     return this.http.post<CreateChatResponse>(
       `${this.API_URL}/chat`,
       {
-        message: content
+        message: content,
+        project_id: projectId
       }
     );
   }
 
-  // Existing chat messages
-  getMessages(
-    chatId: string
-  ): Observable<ChatMessage[]> {
+  getMessages(chatId: string): Observable<ChatMessage[]> {
 
     return this.http.get<ChatMessage[]>(
       `${this.API_URL}/chat/${chatId}/messages`
     );
   }
 
-  // Message inside an EXISTING chat
   sendMessage(
     chatId: string,
     content: string
-  ): Observable<ChatMessage> {
+  ): Observable<SendMessageResponse> {
 
-    return this.http.post<ChatMessage>(
+    return this.http.post<SendMessageResponse>(
       `${this.API_URL}/chat/${chatId}/messages`,
       {
         message: content
@@ -85,9 +98,7 @@ export class ChatService {
     );
   }
 
-  getChat(
-    chatId: string
-  ): Observable<Chat> {
+  getChat(chatId: string): Observable<Chat> {
 
     return this.http.get<Chat>(
       `${this.API_URL}/chat/${chatId}`
@@ -105,12 +116,11 @@ export class ChatService {
     );
   }
 
-  deleteChat(
-    chatId: string
-  ): Observable<void> {
+  deleteChat(chatId: string): Observable<void> {
 
     return this.http.delete<void>(
       `${this.API_URL}/chat/${chatId}`
     );
   }
 }
+

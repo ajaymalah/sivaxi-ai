@@ -1,65 +1,100 @@
-import { Component, afterNextRender, inject, signal } from '@angular/core';
+import {
+  Component,
+  afterNextRender,
+  inject,
+  signal
+} from '@angular/core';
 
-import { ProjectService, Project } from '../../../core/services/project.service';
-import { Chat, ChatMessage, ChatService } from '../../../core/services/chat';
+import {
+  Project,
+  ProjectService
+} from '../../../core/services/project.service';
+
+import {
+  Chat,
+  ChatMessage,
+  ChatService
+} from '../../../core/services/chat';
+import { MarkdownRendererService } from '../../../core/services/markdown-renderer.service.ts';
+
+interface ProjectChats {
+  [projectId: string]: Chat[];
+}
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  styleUrl: './dashboard.css'
 })
 export class Dashboard {
+
   private readonly chatService = inject(ChatService);
   private readonly projectService = inject(ProjectService);
+  private readonly markdownRenderer = inject(MarkdownRendererService);
 
-  // =========================
+  // ============================================================
   // Projects
-  // =========================
+  // ============================================================
 
   readonly projects = signal<Project[]>([]);
   readonly selectedProject = signal<Project | null>(null);
 
+  readonly expandedProjects = signal<Set<string>>(new Set());
+
+  readonly projectChats = signal<ProjectChats>({});
+
   readonly loadingProjects = signal(false);
+  readonly loadingProjectChats = signal<Set<string>>(new Set());
+
   readonly creatingProject = signal(false);
 
-  // =========================
-  // Chats
-  // =========================
+  // ============================================================
+  // Normal / General Chats
+  // ============================================================
 
-  readonly chats = signal<Chat[]>([]);
+  readonly normalChats = signal<Chat[]>([]);
+  readonly loadingNormalChats = signal(false);
+
+  // ============================================================
+  // Selected Chat
+  // ============================================================
+
   readonly selectedChat = signal<Chat | null>(null);
 
-  readonly loadingChats = signal(false);
-  readonly creatingChat = signal(false);
+  readonly loadingMessages = signal(false);
   readonly deletingChat = signal(false);
-
-  // =========================
-  // Messages
-  // =========================
 
   readonly messages = signal<ChatMessage[]>([]);
 
-  readonly loadingMessages = signal(false);
-  readonly sendingMessage = signal(false);
+  // ============================================================
+  // Composer
+  // ============================================================
 
+  readonly sendingMessage = signal(false);
   readonly messageInput = signal('');
 
-  // =========================
-  // Initial load
-  // =========================
+  // ============================================================
+  // Sidebar
+  // ============================================================
+
+  readonly sidebarOpen = signal(true);
+
+  // ============================================================
+  // Initial Load
+  // ============================================================
 
   constructor() {
     afterNextRender(() => {
       this.loadProjects();
-      this.loadChats();
+      this.loadNormalChats();
     });
   }
 
-  // =========================
+  // ============================================================
   // Projects
-  // =========================
+  // ============================================================
 
   loadProjects(): void {
     this.loadingProjects.set(true);
@@ -72,95 +107,255 @@ export class Dashboard {
 
       error: (error) => {
         console.error('Failed to load projects', error);
-
         this.loadingProjects.set(false);
-      },
+      }
     });
+  }
+
+  toggleProject(project: Project): void {
+    const projectId = project.id;
+
+    const next = new Set(this.expandedProjects());
+
+    // Collapse: don't touch the current selection.
+    if (next.has(projectId)) {
+      next.delete(projectId);
+      this.expandedProjects.set(next);
+      return;
+    }
+
+    // Expand + select the project and open its first chat.
+    next.add(projectId);
+    this.expandedProjects.set(next);
+
+    this.openProject(project);
   }
 
   selectProject(project: Project): void {
-    this.selectedProject.set(project);
+    this.openProject(project);
   }
 
-  createProject(): void {
-    if (this.creatingProject()) {
+  isProjectExpanded(projectId: string): boolean {
+    return this.expandedProjects().has(projectId);
+  }
+
+  /**
+   * Selects a project and opens its first chat.
+   * If the project has no chats, the empty "new chat" state is shown.
+   */
+  private openProject(project: Project): void {
+    this.selectedProject.set(project);
+    this.selectedChat.set(null);
+    this.messages.set([]);
+    this.messageInput.set('');
+
+    this.loadProjectChats(project, true);
+  }
+
+  private selectFirstChat(project: Project, chats: Chat[]): void {
+    // Ignore if the user moved elsewhere while chats were loading.
+    if (this.selectedProject()?.id !== project.id || this.selectedChat()) {
       return;
     }
 
-    const name = window.prompt('Project name');
+    const first = chats[0];
 
-    if (!name?.trim()) {
+    if (first) {
+      this.selectedChat.set(first);
+      this.loadMessages(first.id);
+    }
+  }
+
+  // ============================================================
+  // Project Chats
+  // ============================================================
+
+  loadProjectChats(project: Project, autoSelectFirst = false): void {
+    const projectId = project.id;
+
+    // Already loaded: use the cache.
+    const cached = this.projectChats()[projectId];
+
+    if (cached) {
+      if (autoSelectFirst) {
+        this.selectFirstChat(project, cached);
+      }
       return;
     }
 
-    this.creatingProject.set(true);
+    // Already loading: don't fire a duplicate request.
+    if (this.loadingProjectChats().has(projectId)) {
+      return;
+    }
 
-    this.projectService.createProject(name.trim()).subscribe({
-      next: (project) => {
-        this.projects.update((projects) => [project, ...projects]);
+    this.loadingProjectChats.update((ids) => new Set(ids).add(projectId));
 
-        this.selectedProject.set(project);
+    this.chatService.getChats(projectId).subscribe({
+      next: (chats) => {
+        this.projectChats.update((current) => ({
+          ...current,
+          [projectId]: chats
+        }));
 
-        this.creatingProject.set(false);
+        this.loadingProjectChats.update((ids) => {
+          const next = new Set(ids);
+          next.delete(projectId);
+          return next;
+        });
+
+        if (autoSelectFirst) {
+          this.selectFirstChat(project, chats);
+        }
       },
 
       error: (error) => {
-        console.error('Failed to create project', error);
+        console.error(
+          `Failed to load chats for project ${projectId}`,
+          error
+        );
 
-        this.creatingProject.set(false);
-      },
+        this.loadingProjectChats.update((ids) => {
+          const next = new Set(ids);
+          next.delete(projectId);
+          return next;
+        });
+      }
     });
   }
 
-  // =========================
-  // Chats
-  // =========================
+  isLoadingProjectChats(projectId: string): boolean {
+    return this.loadingProjectChats().has(projectId);
+  }
 
-  loadChats(): void {
-    this.loadingChats.set(true);
+  getProjectChats(projectId: string): Chat[] {
+    return this.projectChats()[projectId] ?? [];
+  }
+
+  // ============================================================
+  // Normal Chats
+  // ============================================================
+
+  loadNormalChats(): void {
+    this.loadingNormalChats.set(true);
+
+    /*
+     * Backend returns all chats when project_id is omitted.
+     *
+     * We intentionally filter here so only:
+     *
+     *     project_id === null
+     *
+     * appear inside the global "Chats" section.
+     *
+     * Therefore project chats can never be duplicated here.
+     */
 
     this.chatService.getChats().subscribe({
       next: (chats) => {
-        this.chats.set(chats);
-        this.loadingChats.set(false);
+        const normalChats = chats.filter(
+          chat => chat.project_id === null
+        );
+
+        this.normalChats.set(normalChats);
+        this.loadingNormalChats.set(false);
       },
 
       error: (error) => {
-        console.error('Failed to load chats', error);
-
-        this.loadingChats.set(false);
-      },
+        console.error('Failed to load normal chats', error);
+        this.loadingNormalChats.set(false);
+      }
     });
   }
 
-  selectChat(chat: Chat): void {
+  startGeneralChat(): void {
+    this.selectedProject.set(null);
+    this.selectedChat.set(null);
+
+    this.messages.set([]);
+    this.messageInput.set('');
+  }
+
+  selectNormalChat(chat: Chat): void {
+    this.selectedProject.set(null);
     this.selectedChat.set(chat);
 
     this.loadMessages(chat.id);
   }
 
+  // ============================================================
+  // Start Project Chat
+  // ============================================================
+
+  startProjectChat(project: Project): void {
+    /*
+     * Important:
+     *
+     * We do NOT clear selectedProject here.
+     * The new conversation belongs to this project.
+     *
+     * We call loadProjectChats WITHOUT autoSelectFirst so the user
+     * gets a blank conversation instead of jumping to the first chat.
+     */
+
+    this.selectedProject.set(project);
+    this.selectedChat.set(null);
+
+    this.messages.set([]);
+    this.messageInput.set('');
+
+    const expanded = this.expandedProjects();
+
+    if (!expanded.has(project.id)) {
+      const next = new Set(expanded);
+
+      next.add(project.id);
+
+      this.expandedProjects.set(next);
+    }
+
+    this.loadProjectChats(project);
+  }
+
+  // ============================================================
+  // Chat Selection
+  // ============================================================
+
+  selectChat(chat: Chat, project: Project): void {
+    this.selectedProject.set(project);
+    this.selectedChat.set(chat);
+
+    this.loadMessages(chat.id);
+  }
+
+  // ============================================================
+  // Messages
+  // ============================================================
+
   loadMessages(chatId: string): void {
     this.loadingMessages.set(true);
-
     this.messages.set([]);
 
     this.chatService.getMessages(chatId).subscribe({
       next: (messages) => {
+        // Ignore stale responses if the user switched chats meanwhile.
+        if (this.selectedChat()?.id !== chatId) {
+          return;
+        }
+
         this.messages.set(messages);
         this.loadingMessages.set(false);
       },
 
       error: (error) => {
         console.error('Failed to load messages', error);
-
         this.loadingMessages.set(false);
-      },
+      }
     });
   }
 
-  // =========================
-  // Message input
-  // =========================
+  // ============================================================
+  // Composer
+  // ============================================================
 
   updateMessageInput(event: Event): void {
     const textarea = event.target as HTMLTextAreaElement;
@@ -168,9 +363,13 @@ export class Dashboard {
     this.messageInput.set(textarea.value);
   }
 
-  // =========================
-  // Send message
-  // =========================
+  handleComposerKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+
+      this.sendMessage();
+    }
+  }
 
   sendMessage(): void {
     const content = this.messageInput().trim();
@@ -185,110 +384,153 @@ export class Dashboard {
 
     const chat = this.selectedChat();
 
+    /*
+     * No existing chat means this is the first message.
+     *
+     * selectedProject != null → project chat
+     * selectedProject == null → normal chat
+     */
+
     if (!chat) {
-      this.sendFirstMessage(content);
+      this.createFirstChat(content);
       return;
     }
 
     this.sendToExistingChat(chat.id, content);
   }
 
-  private sendFirstMessage(content: string): void {
+  // ============================================================
+  // Create First Chat
+  // ============================================================
+
+  private createFirstChat(content: string): void {
     this.sendingMessage.set(true);
     this.messageInput.set('');
 
-    this.chatService.createChatWithMessage(content).subscribe({
-      next: (response) => {
-        const chat: Chat = {
-          id: response.chat_id,
-          title: response.title,
-        };
+    const projectId = this.selectedProject()?.id ?? null;
 
-        // Add newly created chat to sidebar
-        this.chats.update((chats) => [chat, ...chats]);
+    this.chatService
+      .createChatWithMessage(content, projectId)
+      .subscribe({
 
-        // Open the newly created chat
-        this.selectedChat.set(chat);
+        next: (response) => {
 
-        // Now synchronize messages from backend
-        this.loadMessages(chat.id);
+          const chat: Chat = {
+            id: response.chat_id,
+            project_id: projectId,
+            title: response.title
+          };
 
-        this.sendingMessage.set(false);
-      },
+          this.selectedChat.set(chat);
 
-      error: (error) => {
-        console.error('Failed to create chat', error);
+          // Project chat
+          if (projectId) {
+            this.projectChats.update((current) => {
+              const existing = current[projectId] ?? [];
 
-        this.sendingMessage.set(false);
-      },
-    });
+              return {
+                ...current,
+                [projectId]: [chat, ...existing]
+              };
+            });
+          }
+
+          // Normal chat
+          else {
+            this.normalChats.update((chats) => [
+              chat,
+              ...chats
+            ]);
+          }
+
+          this.loadMessages(chat.id);
+
+          this.sendingMessage.set(false);
+        },
+
+        error: (error) => {
+          console.error('Failed to create chat', error);
+
+          this.sendingMessage.set(false);
+        }
+      });
   }
 
-  startNewChat(): void {
-    this.selectedChat.set(null);
-    this.messages.set([]);
-    this.messageInput.set('');
-  }
+  // ============================================================
+  // Existing Chat Message
+  // ============================================================
 
-  private sendToExistingChat(chatId: string, content: string): void {
+  private sendToExistingChat(
+    chatId: string,
+    content: string
+  ): void {
+
     this.sendingMessage.set(true);
     this.messageInput.set('');
 
-    // Optimistic user message append immediately
+    /*
+     * Optimistic user message so it appears immediately
+     * without waiting for the backend response.
+     */
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
+      chat_id: chatId,
       role: 'user',
-      content,
+      content: {
+        type: 'text',
+        content
+      }
     };
 
-    this.messages.update((messages) => [...messages, userMessage]);
+    this.messages.update((messages) => [
+      ...messages,
+      userMessage
+    ]);
 
-    this.chatService.sendMessage(chatId, content).subscribe({
-      next: (response:any) => {
-        // Append the assistant response as well
-        if (response && response.message) {
-              this.messages.update((messages) => [...messages, {
-            "id": Math.random().toString(),
-            "content": response.message,
-            "role": "assistant"
-          }]);
-        
-        } else if (response) {
-          // In case the backend returns the message directly or in another format
-          this.messages.update((messages) => [...messages, response as unknown as ChatMessage]);
+    this.chatService
+      .sendMessage(chatId, content)
+      .subscribe({
+
+        next: (response) => {
+
+          /*
+           * The backend returns the persisted MessageResponse.
+           * Use it directly instead of creating a local fake message.
+           */
+          if (response?.message) {
+            this.messages.update((messages) => [
+              ...messages,
+              response.message
+            ]);
+          }
+
+          this.sendingMessage.set(false);
+        },
+
+        error: (error) => {
+
+          console.error('Failed to send message', error);
+
+          /*
+           * Backend may have saved the message even if the
+           * response failed, so reload the authoritative history.
+           */
+          this.loadMessages(chatId);
+
+          this.sendingMessage.set(false);
         }
-
-        this.sendingMessage.set(false);
-      },
-
-      error: (error) => {
-        console.error('Failed to send message', error);
-
-        // Optionally revert or reload messages on error, but keep it smooth
-        this.loadMessages(chatId);
-
-        this.sendingMessage.set(false);
-      },
-    });
+      });
   }
 
-  // =========================
-  // Keyboard
-  // =========================
+  // ============================================================
+  // Delete Project Chat
+  // ============================================================
 
-  handleComposerKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
+  deleteChat(
+    chat: Chat,
+    project: Project
+  ): void {
 
-      this.sendMessage();
-    }
-  }
-
-  // =========================
-  // Delete chat
-  // =========================
-
-  deleteChat(chat: Chat): void {
     if (this.deletingChat()) {
       return;
     }
@@ -302,8 +544,17 @@ export class Dashboard {
     this.deletingChat.set(true);
 
     this.chatService.deleteChat(chat.id).subscribe({
+
       next: () => {
-        this.chats.update((chats) => chats.filter((item) => item.id !== chat.id));
+
+        this.projectChats.update((current) => {
+          const chats = current[project.id] ?? [];
+
+          return {
+            ...current,
+            [project.id]: chats.filter(item => item.id !== chat.id)
+          };
+        });
 
         if (this.selectedChat()?.id === chat.id) {
           this.selectedChat.set(null);
@@ -317,7 +568,132 @@ export class Dashboard {
         console.error('Failed to delete chat', error);
 
         this.deletingChat.set(false);
-      },
+      }
     });
+  }
+
+  // ============================================================
+  // Delete Normal Chat
+  // ============================================================
+
+  deleteNormalChat(chat: Chat): void {
+
+    if (this.deletingChat()) {
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this conversation?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingChat.set(true);
+
+    this.chatService.deleteChat(chat.id).subscribe({
+
+      next: () => {
+
+        this.normalChats.update((chats) =>
+          chats.filter(item => item.id !== chat.id)
+        );
+
+        if (this.selectedChat()?.id === chat.id) {
+          this.selectedChat.set(null);
+          this.selectedProject.set(null);
+          this.messages.set([]);
+        }
+
+        this.deletingChat.set(false);
+      },
+
+      error: (error) => {
+        console.error('Failed to delete chat', error);
+
+        this.deletingChat.set(false);
+      }
+    });
+  }
+
+  // ============================================================
+  // Create Project
+  // ============================================================
+
+  createProject(): void {
+
+    if (this.creatingProject()) {
+      return;
+    }
+
+    const name = window.prompt('Project name');
+
+    if (!name?.trim()) {
+      return;
+    }
+
+    this.creatingProject.set(true);
+
+    this.projectService
+      .createProject(name.trim())
+      .subscribe({
+
+        next: (project) => {
+
+          this.projects.update((projects) => [
+            project,
+            ...projects
+          ]);
+
+          // A new project has no chats: select it with a blank conversation.
+          this.selectedProject.set(project);
+          this.selectedChat.set(null);
+          this.messages.set([]);
+          this.messageInput.set('');
+
+          this.expandedProjects.update((projects) => {
+            const next = new Set(projects);
+            next.add(project.id);
+            return next;
+          });
+
+          this.projectChats.update((current) => ({
+            ...current,
+            [project.id]: []
+          }));
+
+          this.creatingProject.set(false);
+        },
+
+        error: (error) => {
+          console.error('Failed to create project', error);
+
+          this.creatingProject.set(false);
+        }
+      });
+  }
+
+  // ============================================================
+  // Markdown
+  // ============================================================
+
+  renderAssistantMessage(message: ChatMessage) {
+    const content =
+      message.content?.content?.[0]?.text
+      ?? message.content
+      ?? '';
+
+    return this.markdownRenderer.render(content);
+  }
+
+  handleMarkdownClick(event: Event): void {
+  this.markdownRenderer.handleClick(event);
+}
+
+  // ============================================================
+  // Sidebar
+  // ============================================================
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update(open => !open);
   }
 }

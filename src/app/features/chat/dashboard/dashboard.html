@@ -1,373 +1,373 @@
-<div class="flex h-screen overflow-hidden bg-amber-50/40 text-slate-800 font-sans">
-  <!-- ================================================= -->
-  <!-- SIDEBAR -->
-  <!-- ================================================= -->
-
-  <aside class="flex w-72 shrink-0 flex-col border-r border-amber-200/60 bg-white/90 backdrop-blur-md shadow-xs">
-    <!-- Brand -->
-
-    <div class="flex h-16 items-center justify-between px-5 border-b border-amber-100">
-      <div class="flex items-center gap-2.5">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-white font-bold shadow-md shadow-amber-200">
-          S
+<div class="flex h-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased selection:bg-teal-300/20">
+  <!-- ===================== SIDEBAR ===================== -->
+  @if (sidebarOpen()) {
+    <aside class="flex w-[272px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0c0f]">
+      <!-- Brand -->
+      <div class="flex h-14 items-center justify-between px-4">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-bold text-zinc-950"
+          >
+            S
+          </div>
+          <span class="text-[15px] font-semibold tracking-tight">Sivaxi AI</span>
         </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight text-slate-900">Sivaxi AI</h1>
-          <p class="text-[11px] text-amber-700/80 font-medium">AI workspace</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- New chat -->
-
-    <div class="px-3 pt-4">
-      <button
-        type="button"
-        (click)="startNewChat()"
-        [disabled]="creatingChat()"
-        class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-amber-200 transition-all hover:from-amber-700 hover:to-amber-800 hover:shadow-md disabled:opacity-50"
-      >
-        <span class="text-lg leading-none"> + </span>
-        <span>
-          {{ creatingChat() ? 'Creating...' : 'New chat' }}
-        </span>
-      </button>
-    </div>
-
-    <!-- Search -->
-
-    <div class="px-3 pt-2">
-      <button
-        type="button"
-        class="flex w-full items-center gap-2.5 rounded-xl border border-amber-200/60 bg-amber-50/50 px-3 py-2.5 text-sm text-slate-500 transition-all hover:border-amber-300 hover:bg-white"
-      >
-        <span class="text-base text-amber-500"> ⌕ </span>
-        <span> Search chats... </span>
-      </button>
-    </div>
-
-    <!-- ================================================= -->
-    <!-- PROJECTS -->
-    <!-- ================================================= -->
-
-    <div class="mt-4 px-3">
-      <div class="flex items-center justify-between px-3 pb-2">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-800/70">Projects</p>
 
         <button
           type="button"
-          (click)="createProject()"
-          [disabled]="creatingProject()"
-          class="flex h-6 w-6 items-center justify-center rounded-md text-amber-700 transition-all hover:bg-amber-100 hover:text-amber-900"
-          title="Create project"
+          (click)="toggleSidebar()"
+          class="rounded-md p-1.5 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
+          title="Close sidebar"
+          aria-label="Close sidebar"
         >
-          +
+          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+            <path stroke-linecap="round" d="M9.5 4.5v15" />
+          </svg>
         </button>
       </div>
 
-      @if (loadingProjects()) {
-        <div class="px-3 py-2 text-xs text-slate-400">Loading projects...</div>
-
-      } @else if (projects().length === 0) {
-        <div class="px-3 py-2 text-xs text-slate-400">No projects yet.</div>
-
-      } @else {
-        <div class="space-y-0.5 max-h-36 overflow-y-auto pr-1">
-          @for (project of projects(); track project.id) {
-            <button
-              type="button"
-              (click)="selectProject(project)"
-              [class.bg-amber-100/70]="selectedProject()?.id === project.id"
-              [class.text-amber-950]="selectedProject()?.id === project.id"
-              [class.font-medium]="selectedProject()?.id === project.id"
-              class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-600 transition-all hover:bg-amber-50 hover:text-slate-900"
-            >
-              <span class="text-amber-600"> □ </span>
-              <span class="truncate">
-                {{ project.name }}
-              </span>
-            </button>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- ================================================= -->
-    <!-- CHATS -->
-    <!-- ================================================= -->
-
-    <div class="mt-4 flex-1 overflow-y-auto px-3">
-      <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-800/70">Chats</p>
-
-      @if (loadingChats()) {
-        <div class="px-3 py-2 text-xs text-slate-400">Loading chats...</div>
-
-      } @else if (chats().length === 0) {
-        <div class="px-3 py-2 text-xs text-slate-400">No conversations yet.</div>
-
-      } @else {
-        <div class="space-y-0.5">
-          @for (chat of chats(); track chat.id) {
-            <div
-              [class.bg-amber-100/70]="selectedChat()?.id === chat.id"
-              [class.text-amber-950]="selectedChat()?.id === chat.id"
-              [class.font-medium]="selectedChat()?.id === chat.id"
-              class="group flex items-center rounded-lg text-slate-600 transition-all hover:bg-amber-50 hover:text-slate-900"
-            >
-              <button
-                type="button"
-                (click)="selectChat(chat)"
-                class="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm"
-              >
-                {{ chat.title }}
-              </button>
-
-              <button
-                type="button"
-                (click)="deleteChat(chat)"
-                class="mr-2 hidden rounded-md p-1 text-slate-400 hover:bg-amber-200 hover:text-slate-700 group-hover:block"
-                title="Delete chat"
-              >
-                ×
-              </button>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- ================================================= -->
-    <!-- USER & SIGN OUT -->
-    <!-- ================================================= -->
-
-    <div class="border-t border-amber-100 p-3 space-y-2">
-      <div class="flex items-center gap-3 rounded-xl px-2 py-1.5">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-700 text-sm font-semibold text-white shadow-sm">
-          A
-        </div>
-
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-semibold text-slate-900">User Account</p>
-          <p class="text-xs text-amber-800/70 truncate">Workspace active</p>
-        </div>
+      <!-- New chat -->
+      <div class="px-3 pb-2 pt-1">
+        <button
+          type="button"
+          (click)="startGeneralChat()"
+          class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-200 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
+        >
+          <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+          </svg>
+          New chat
+        </button>
       </div>
 
-      <button
-        type="button"
-       
-        class="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-xs font-semibold text-rose-600 shadow-sm transition-all hover:bg-rose-50 hover:border-rose-200"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
-        <span>Sign Out / Logout</span>
-      </button>
-    </div>
-  </aside>
+      <div class="sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
+        <!-- ============ PROJECTS ============ -->
+        <section class="mt-4">
+          <div class="mb-1 flex items-center justify-between px-2">
+            <span class="text-xs font-medium text-zinc-500">Projects</span>
 
-  <!-- ================================================= -->
-  <!-- MAIN -->
-  <!-- ================================================= -->
+            <button
+              type="button"
+              (click)="createProject()"
+              [disabled]="creatingProject()"
+              class="rounded-md p-1 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+              title="Create project"
+              aria-label="Create project"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
+          </div>
 
-  <main class="relative flex min-w-0 flex-1 flex-col bg-amber-50/30">
-    <!-- Header -->
+          @if (loadingProjects()) {
+            <div class="space-y-1.5 px-1 py-1">
+              <div class="h-8 animate-pulse rounded-lg bg-white/[0.04]"></div>
+              <div class="h-8 animate-pulse rounded-lg bg-white/[0.04]"></div>
+              <div class="h-8 animate-pulse rounded-lg bg-white/[0.04]"></div>
+            </div>
+          } @else if (projects().length === 0) {
+            <button
+              type="button"
+              (click)="createProject()"
+              class="w-full rounded-lg px-2 py-2 text-left text-[13px] text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-300"
+            >
+              Create your first project
+            </button>
+          } @else {
+            <div class="space-y-0.5">
+              @for (project of projects(); track project.id) {
+                <div>
+                  <!-- Project row -->
+                  <div
+                    class="group flex items-center rounded-lg transition hover:bg-white/[0.04]"
+                    [class.bg-white/[0.06]]="selectedProject()?.id === project.id && !selectedChat()"
+                  >
+                    <button
+                      type="button"
+                      (click)="toggleProject(project)"
+                      class="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
+                      [attr.aria-expanded]="isProjectExpanded(project.id)"
+                    >
+                      <svg
+                        class="h-3.5 w-3.5 shrink-0 text-zinc-600 transition-transform duration-150"
+                        [class.rotate-90]="isProjectExpanded(project.id)"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
 
-    <header class="flex h-16 shrink-0 items-center justify-between border-b border-amber-200/60 bg-white/80 backdrop-blur-md px-6 shadow-xs">
-      @if (selectedProject(); as project) {
-        <div class="min-w-0">
-          <p class="truncate text-[11px] font-medium text-amber-800/70 uppercase tracking-wider">Project</p>
-          <h1 class="truncate text-sm font-semibold text-slate-900">
-            {{ project.name }}
-          </h1>
-        </div>
+                      <span
+                        class="truncate text-[13.5px]"
+                        [class.text-zinc-100]="selectedProject()?.id === project.id"
+                        [class.text-zinc-400]="selectedProject()?.id !== project.id"
+                      >
+                        {{ project.name }}
+                      </span>
+                    </button>
 
-      } @else if (selectedChat(); as chat) {
-        <h1 class="truncate text-sm font-semibold text-slate-900">
-          {{ chat.title }}
-        </h1>
+                    <button
+                      type="button"
+                      (click)="startProjectChat(project)"
+                      class="mr-1 rounded-md p-1 text-zinc-500 opacity-0 transition hover:bg-white/10 hover:text-zinc-100 focus-visible:opacity-100 group-hover:opacity-100"
+                      title="New chat in this project"
+                      aria-label="New chat in this project"
+                    >
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+                      </svg>
+                    </button>
+                  </div>
 
-      } @else {
-        <h1 class="text-sm font-semibold text-slate-900">New chat session</h1>
+                  <!-- Project chats -->
+                  @if (isProjectExpanded(project.id)) {
+                    <div class="ml-[15px] mt-0.5 space-y-0.5 border-l border-white/[0.07] pl-2">
+                      @if (isLoadingProjectChats(project.id)) {
+                        <div class="px-2 py-1.5 text-xs text-zinc-600">Loading…</div>
+                      } @else if (getProjectChats(project.id).length === 0) {
+                        <div class="px-2 py-1.5 text-xs text-zinc-600">No chats yet</div>
+                      }
+
+                      @for (chat of getProjectChats(project.id); track chat.id) {
+                        <div
+                          class="group/chat flex items-center rounded-lg transition hover:bg-white/[0.04]"
+                          [class.bg-white/[0.07]]="selectedChat()?.id === chat.id"
+                        >
+                          <button
+                            type="button"
+                            (click)="selectChat(chat, project)"
+                            class="min-w-0 flex-1 truncate rounded-lg px-2 py-1.5 text-left text-[13px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
+                            [class.text-zinc-100]="selectedChat()?.id === chat.id"
+                            [class.text-zinc-500]="selectedChat()?.id !== chat.id"
+                          >
+                            {{ chat.title || 'New chat' }}
+                          </button>
+
+                          <button
+                            type="button"
+                            (click)="deleteChat(chat, project)"
+                            class="mr-1 rounded-md p-1 text-zinc-600 opacity-0 transition hover:bg-white/10 hover:text-red-400 focus-visible:opacity-100 group-hover/chat:opacity-100"
+                            title="Delete chat"
+                            aria-label="Delete chat"
+                          >
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-7 0v14m6-14v14M5 6l1 15h12l1-15" />
+                            </svg>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- ============ NORMAL CHATS ============ -->
+        <section class="mt-6">
+          <div class="mb-1 px-2">
+            <span class="text-xs font-medium text-zinc-500">Recent chats</span>
+          </div>
+
+          @if (loadingNormalChats()) {
+            <div class="space-y-1.5 px-1 py-1">
+              <div class="h-8 animate-pulse rounded-lg bg-white/[0.04]"></div>
+              <div class="h-8 animate-pulse rounded-lg bg-white/[0.04]"></div>
+            </div>
+          } @else if (normalChats().length === 0) {
+            <div class="px-2 py-2 text-[13px] text-zinc-600">Chats outside projects appear here</div>
+          } @else {
+            <div class="space-y-0.5">
+              @for (chat of normalChats(); track chat.id) {
+                <div
+                  class="group/chat flex items-center rounded-lg transition hover:bg-white/[0.04]"
+                  [class.bg-white/[0.07]]="selectedChat()?.id === chat.id && selectedProject() === null"
+                >
+                  <button
+                    type="button"
+                    (click)="selectNormalChat(chat)"
+                    class="min-w-0 flex-1 truncate rounded-lg px-2 py-1.5 text-left text-[13.5px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
+                    [class.text-zinc-100]="selectedChat()?.id === chat.id && selectedProject() === null"
+                    [class.text-zinc-500]="!(selectedChat()?.id === chat.id && selectedProject() === null)"
+                  >
+                    {{ chat.title || 'New chat' }}
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="deleteNormalChat(chat)"
+                    class="mr-1 rounded-md p-1 text-zinc-600 opacity-0 transition hover:bg-white/10 hover:text-red-400 focus-visible:opacity-100 group-hover/chat:opacity-100"
+                    title="Delete chat"
+                    aria-label="Delete chat"
+                  >
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-7 0v14m6-14v14M5 6l1 15h12l1-15" />
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </section>
+      </div>
+    </aside>
+  }
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="flex min-w-0 flex-1 flex-col">
+    <!-- Top bar -->
+    <header class="flex h-14 shrink-0 items-center gap-2 px-4">
+      @if (!sidebarOpen()) {
+        <button
+          type="button"
+          (click)="toggleSidebar()"
+          class="rounded-md p-1.5 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
+          title="Open sidebar"
+          aria-label="Open sidebar"
+        >
+          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+            <path stroke-linecap="round" d="M9.5 4.5v15" />
+          </svg>
+        </button>
       }
 
-      <div class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 border border-emerald-200">
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          Connected
-        </span>
+      <div class="flex min-w-0 items-center gap-2 text-sm">
+        @if (selectedProject()) {
+          <span class="truncate text-zinc-400">{{ selectedProject()?.name }}</span>
+          <svg class="h-3.5 w-3.5 shrink-0 text-zinc-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        }
+        <span class="truncate font-medium text-zinc-200">{{ selectedChat()?.title || 'New chat' }}</span>
       </div>
     </header>
 
-    <!-- ================================================= -->
-    <!-- CONTENT -->
-    <!-- ================================================= -->
-
-    @if (selectedChat() === null) {
-      <!-- Welcome -->
-
-      <section class="flex flex-1 flex-col items-center justify-center px-6">
-        <div class="w-full max-w-2xl">
-          <div class="text-center">
-            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white text-2xl font-bold shadow-lg shadow-amber-200">
-              S
-            </div>
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900">What can I help with today?</h2>
-            <p class="mt-2 text-sm text-slate-500">Ask Sivaxi AI anything or choose a starting prompt below.</p>
+    <section class="flex min-h-0 flex-1 flex-col">
+      <!-- Empty state -->
+      @if (!selectedChat() && messages().length === 0) {
+        <div class="flex flex-1 flex-col items-center justify-center px-6 pb-10">
+          <div
+            class="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-lg font-bold text-zinc-950 shadow-[0_0_0_6px_rgba(255,255,255,0.04)]"
+          >
+            S
           </div>
 
-          <!-- Suggested prompts -->
+          <h1 class="text-center text-[28px] font-semibold tracking-tight text-zinc-100">
+            What are you working on?
+          </h1>
 
-          <div class="mt-8 grid grid-cols-2 gap-3.5">
-            <button
-              type="button"
-              (click)="messageInput.set('Explain this concept to me simply')"
-              class="group rounded-2xl border border-amber-200/80 bg-white p-4 text-left shadow-xs transition-all hover:border-amber-400 hover:shadow-md hover:bg-amber-50/50"
-            >
-              <p class="font-semibold text-slate-900 group-hover:text-amber-900">Explain something</p>
-              <p class="mt-1 text-xs text-slate-500">Learn a concept step by step</p>
-            </button>
-
-            <button
-              type="button"
-              (click)="messageInput.set('Help me write clean code')"
-              class="group rounded-2xl border border-amber-200/80 bg-white p-4 text-left shadow-xs transition-all hover:border-amber-400 hover:shadow-md hover:bg-amber-50/50"
-            >
-              <p class="font-semibold text-slate-900 group-hover:text-amber-900">Write code</p>
-              <p class="mt-1 text-xs text-slate-500">Build and improve your code</p>
-            </button>
-
-            <button
-              type="button"
-              (click)="messageInput.set('Analyze this problem')"
-              class="group rounded-2xl border border-amber-200/80 bg-white p-4 text-left shadow-xs transition-all hover:border-amber-400 hover:shadow-md hover:bg-amber-50/50"
-            >
-              <p class="font-semibold text-slate-900 group-hover:text-amber-900">Analyze a problem</p>
-              <p class="mt-1 text-xs text-slate-500">Think through a difficult problem</p>
-            </button>
-
-            <button
-              type="button"
-              (click)="messageInput.set('Help me learn something new')"
-              class="group rounded-2xl border border-amber-200/80 bg-white p-4 text-left shadow-xs transition-all hover:border-amber-400 hover:shadow-md hover:bg-amber-50/50"
-            >
-              <p class="font-semibold text-slate-900 group-hover:text-amber-900">Learn</p>
-              <p class="mt-1 text-xs text-slate-500">Explore a new topic</p>
-            </button>
-          </div>
+          <p class="mt-2 max-w-sm text-center text-sm leading-6 text-zinc-500">
+            @if (selectedProject()) {
+              This chat will be saved in
+              <span class="text-zinc-300">{{ selectedProject()?.name }}</span>.
+            } @else {
+              Ask anything, or pick a project to keep related chats together.
+            }
+          </p>
         </div>
-      </section>
+      }
 
-    } @else {
-      <!-- ================================================= -->
-      <!-- MESSAGES -->
-      <!-- ================================================= -->
+      <!-- Messages -->
+      @if (selectedChat() || messages().length > 0) {
+        <div class="chat-scroll flex-1 overflow-y-auto">
+          <div class="mx-auto w-full max-w-[720px] px-5 pb-6 pt-4">
+            @if (loadingMessages()) {
+              <div class="flex items-center justify-center py-16">
+                <div class="h-5 w-5 animate-spin rounded-full border-2 border-zinc-800 border-t-zinc-300"></div>
+              </div>
+            } @else {
+              <div class="space-y-7">
+                @for (message of messages(); track message.id) {
+                  @if (message.role === 'user') {
+                    <div class="flex justify-end">
+                      <div
+                        class="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-zinc-800/80 px-4 py-2.5 text-[14.5px] leading-6 text-zinc-100"
+                      >
+                        {{ message.content?.content || message.content }}
+                      </div>
+                    </div>
+                  }
 
-      <section #scrollContainer class="flex-1 overflow-y-auto px-6 py-8 scroll-smooth">
-        <div class="mx-auto max-w-3xl space-y-6">
-          @if (loadingMessages()) {
-            <div class="py-12 text-center text-sm text-slate-400">Loading conversation...</div>
+                  @if (message.role === 'assistant') {
+                    <div class="flex items-start gap-3.5">
+                      <div
+                        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[11px] font-bold text-zinc-950"
+                      >
+                        S
+                      </div>
 
-          } @else if (messages().length === 0) {
-            <div class="py-12 text-center">
-              <p class="text-sm text-slate-400">Start the conversation below.</p>
-            </div>
+                      <div
+  class="chat-prose min-w-0 flex-1 text-[14.5px] leading-7 text-zinc-300"
+  [innerHTML]="renderAssistantMessage(message)"
+  (click)="handleMarkdownClick($event)"
+></div>
+                    </div>
+                  }
+                }
 
-          } @else {
-            @for (message of messages(); track message.id) {
-              @if (message.role === 'user') {
-                <!-- User Message (Right Aligned Amber Bubble) -->
-                <div class="flex items-start justify-end gap-3">
-                  <div class="max-w-[75%] rounded-2xl rounded-tr-xs bg-amber-600 px-4 py-3 text-sm leading-7 text-white shadow-sm">
-                    <div class="whitespace-pre-wrap">
-                      {{ message.content.content }}
+                @if (sendingMessage()) {
+                  <div class="flex items-start gap-3.5">
+                    <div
+                      class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[11px] font-bold text-zinc-950"
+                    >
+                      S
+                    </div>
+
+                    <div class="flex items-center gap-1 pt-2.5" aria-label="Sivaxi AI is typing">
+                      <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500"></span>
+                      <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500 [animation-delay:150ms]"></span>
+                      <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500 [animation-delay:300ms]"></span>
                     </div>
                   </div>
-                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white shadow-sm">
-                    A
-                  </div>
-                </div>
-
-              } @else {
-                <!-- AI / Mia Message (Left Aligned White Bubble) -->
-                <div class="flex items-start gap-3">
-                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-white text-xs font-bold text-amber-700 shadow-xs">
-                    S
-                  </div>
-                  <div class="max-w-[85%] rounded-2xl rounded-tl-xs border border-amber-200/70 bg-white px-4 py-3 text-sm leading-7 text-slate-800 shadow-sm">
-                    @for (content of message.content.content; track content.id) {
-                      <div class="whitespace-pre-wrap">
-                        {{ content.text }}
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
+                }
+              </div>
             }
-          }
-
-          @if (sendingMessage()) {
-            <div class="flex items-start gap-3">
-              <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-200 bg-white text-xs font-bold text-amber-700 shadow-xs">
-                S
-              </div>
-              <div class="rounded-2xl rounded-tl-xs border border-amber-200/70 bg-white px-4 py-3 shadow-sm">
-                <div class="flex items-center gap-2">
-                  <div class="flex gap-1">
-                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-600"></span>
-                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-600"></span>
-                    <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-600"></span>
-                  </div>
-                  <span class="text-xs text-slate-400 font-medium"> Sivaxi AI is thinking... </span>
-                </div>
-              </div>
-            </div>
-          }
+          </div>
         </div>
-      </section>
-    }
+      }
 
-    <!-- ================================================= -->
-    <!-- COMPOSER -->
-    <!-- ================================================= -->
-
-    <div class="w-full shrink-0 px-4 pb-6 bg-amber-50/30">
-      <div class="mx-auto max-w-3xl">
-        <div
-          class="flex items-end gap-3 rounded-2xl border border-amber-300 bg-white px-4 py-3 shadow-lg shadow-amber-100/50 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-100 transition-all"
-        >
-          <!-- Attachment -->
-
-          <button type="button" class="mb-1 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-amber-50 hover:text-amber-700 transition-colors" title="Attach file">+</button>
-
-          <!-- Input -->
-
-          <textarea
-            rows="1"
-            [value]="messageInput()"
-            (input)="updateMessageInput($event)"
-            (keydown)="handleComposerKeydown($event)"
-            placeholder="Message Sivaxi AI..."
-            class="max-h-40 min-h-8 flex-1 resize-none border-0 bg-transparent py-1 text-sm leading-6 outline-none text-slate-900 placeholder:text-slate-400"
+      <!-- Composer -->
+      <div class="shrink-0 px-5 pb-5 pt-2">
+        <div class="mx-auto w-full max-w-[720px]">
+          <div
+            class="relative rounded-2xl bg-zinc-900/80 shadow-[0_8px_30px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/10 transition focus-within:ring-white/25"
           >
-          </textarea>
+            <textarea
+              rows="1"
+              [value]="messageInput()"
+              (input)="updateMessageInput($event)"
+              (keydown)="handleComposerKeydown($event)"
+              [disabled]="sendingMessage()"
+              placeholder="Message Sivaxi AI"
+              aria-label="Message"
+              class="block max-h-48 min-h-[56px] w-full resize-none bg-transparent py-[18px] pl-5 pr-16 text-[14.5px] leading-5 text-zinc-100 outline-none [field-sizing:content] placeholder:text-zinc-600 disabled:cursor-not-allowed disabled:opacity-60"
+            ></textarea>
 
-          <!-- Send -->
+            <button
+              type="button"
+              (click)="sendMessage()"
+              [disabled]="!messageInput().trim() || sendingMessage()"
+              class="absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-100 text-zinc-950 transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300/70 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-600"
+              title="Send message"
+              aria-label="Send message"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
 
-          <button
-            type="button"
-            (click)="sendMessage()"
-            [disabled]="!messageInput().trim() || sendingMessage()"
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-600 text-white transition-all hover:bg-amber-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-30"
-            title="Send message"
-          >
-            ↑
-          </button>
+          <p class="mt-2.5 text-center text-xs text-zinc-600">
+            Sivaxi AI can make mistakes. Check important information.
+          </p>
         </div>
-
-        <p class="mt-2 text-center text-[11px] text-slate-400">
-          Sivaxi AI can make mistakes. Check important information.
-        </p>
       </div>
-    </div>
+    </section>
   </main>
 </div>
