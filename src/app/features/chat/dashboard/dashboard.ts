@@ -1,21 +1,10 @@
-import {
-  Component,
-  afterNextRender,
-  inject,
-  signal
-} from '@angular/core';
+import { Component, afterNextRender, inject, signal } from '@angular/core';
 
-import {
-  Project,
-  ProjectService
-} from '../../../core/services/project.service';
+import { Project, ProjectService } from '../../../core/services/project.service';
 
-import {
-  Chat,
-  ChatMessage,
-  ChatService
-} from '../../../core/services/chat';
+import { Chat, ChatMessage, ChatService } from '../../../core/services/chat';
 import { MarkdownRendererService } from '../../../core/services/markdown-renderer.service.ts';
+import { KeycloakService } from '../../../core/services/keycloak';
 
 interface ProjectChats {
   [projectId: string]: Chat[];
@@ -26,13 +15,13 @@ interface ProjectChats {
   standalone: true,
   imports: [],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css'
+  styleUrl: './dashboard.css',
 })
 export class Dashboard {
-
   private readonly chatService = inject(ChatService);
   private readonly projectService = inject(ProjectService);
   private readonly markdownRenderer = inject(MarkdownRendererService);
+  private readonly keyclaokService = inject(KeycloakService)
 
   // ============================================================
   // Projects
@@ -108,7 +97,7 @@ export class Dashboard {
       error: (error) => {
         console.error('Failed to load projects', error);
         this.loadingProjects.set(false);
-      }
+      },
     });
   }
 
@@ -194,7 +183,7 @@ export class Dashboard {
       next: (chats) => {
         this.projectChats.update((current) => ({
           ...current,
-          [projectId]: chats
+          [projectId]: chats,
         }));
 
         this.loadingProjectChats.update((ids) => {
@@ -209,17 +198,14 @@ export class Dashboard {
       },
 
       error: (error) => {
-        console.error(
-          `Failed to load chats for project ${projectId}`,
-          error
-        );
+        console.error(`Failed to load chats for project ${projectId}`, error);
 
         this.loadingProjectChats.update((ids) => {
           const next = new Set(ids);
           next.delete(projectId);
           return next;
         });
-      }
+      },
     });
   }
 
@@ -252,9 +238,7 @@ export class Dashboard {
 
     this.chatService.getChats().subscribe({
       next: (chats) => {
-        const normalChats = chats.filter(
-          chat => chat.project_id === null
-        );
+        const normalChats = chats.filter((chat) => chat.project_id === null);
 
         this.normalChats.set(normalChats);
         this.loadingNormalChats.set(false);
@@ -263,7 +247,7 @@ export class Dashboard {
       error: (error) => {
         console.error('Failed to load normal chats', error);
         this.loadingNormalChats.set(false);
-      }
+      },
     });
   }
 
@@ -349,7 +333,7 @@ export class Dashboard {
       error: (error) => {
         console.error('Failed to load messages', error);
         this.loadingMessages.set(false);
-      }
+      },
     });
   }
 
@@ -409,62 +393,51 @@ export class Dashboard {
 
     const projectId = this.selectedProject()?.id ?? null;
 
-    this.chatService
-      .createChatWithMessage(content, projectId)
-      .subscribe({
+    this.chatService.createChatWithMessage(content, projectId).subscribe({
+      next: (response) => {
+        const chat: Chat = {
+          id: response.chat_id,
+          project_id: projectId,
+          title: response.title,
+        };
 
-        next: (response) => {
+        this.selectedChat.set(chat);
 
-          const chat: Chat = {
-            id: response.chat_id,
-            project_id: projectId,
-            title: response.title
-          };
+        // Project chat
+        if (projectId) {
+          this.projectChats.update((current) => {
+            const existing = current[projectId] ?? [];
 
-          this.selectedChat.set(chat);
-
-          // Project chat
-          if (projectId) {
-            this.projectChats.update((current) => {
-              const existing = current[projectId] ?? [];
-
-              return {
-                ...current,
-                [projectId]: [chat, ...existing]
-              };
-            });
-          }
-
-          // Normal chat
-          else {
-            this.normalChats.update((chats) => [
-              chat,
-              ...chats
-            ]);
-          }
-
-          this.loadMessages(chat.id);
-
-          this.sendingMessage.set(false);
-        },
-
-        error: (error) => {
-          console.error('Failed to create chat', error);
-
-          this.sendingMessage.set(false);
+            return {
+              ...current,
+              [projectId]: [chat, ...existing],
+            };
+          });
         }
-      });
+
+        // Normal chat
+        else {
+          this.normalChats.update((chats) => [chat, ...chats]);
+        }
+
+        this.loadMessages(chat.id);
+
+        this.sendingMessage.set(false);
+      },
+
+      error: (error) => {
+        console.error('Failed to create chat', error);
+
+        this.sendingMessage.set(false);
+      },
+    });
   }
 
   // ============================================================
   // Existing Chat Message
   // ============================================================
 
-  private sendToExistingChat(
-    chatId: string,
-    content: string
-  ): void {
-
+  private sendToExistingChat(chatId: string, content: string): void {
     this.sendingMessage.set(true);
     this.messageInput.set('');
 
@@ -478,59 +451,44 @@ export class Dashboard {
       role: 'user',
       content: {
         type: 'text',
-        content
-      }
+        content,
+      },
     };
 
-    this.messages.update((messages) => [
-      ...messages,
-      userMessage
-    ]);
+    this.messages.update((messages) => [...messages, userMessage]);
 
-    this.chatService
-      .sendMessage(chatId, content)
-      .subscribe({
-
-        next: (response) => {
-
-          /*
-           * The backend returns the persisted MessageResponse.
-           * Use it directly instead of creating a local fake message.
-           */
-          if (response?.message) {
-            this.messages.update((messages) => [
-              ...messages,
-              response.message
-            ]);
-          }
-
-          this.sendingMessage.set(false);
-        },
-
-        error: (error) => {
-
-          console.error('Failed to send message', error);
-
-          /*
-           * Backend may have saved the message even if the
-           * response failed, so reload the authoritative history.
-           */
-          this.loadMessages(chatId);
-
-          this.sendingMessage.set(false);
+    this.chatService.sendMessage(chatId, content).subscribe({
+      next: (response) => {
+        /*
+         * The backend returns the persisted MessageResponse.
+         * Use it directly instead of creating a local fake message.
+         */
+        if (response?.message) {
+          this.messages.update((messages) => [...messages, response.message]);
         }
-      });
+
+        this.sendingMessage.set(false);
+      },
+
+      error: (error) => {
+        console.error('Failed to send message', error);
+
+        /*
+         * Backend may have saved the message even if the
+         * response failed, so reload the authoritative history.
+         */
+        this.loadMessages(chatId);
+
+        this.sendingMessage.set(false);
+      },
+    });
   }
 
   // ============================================================
   // Delete Project Chat
   // ============================================================
 
-  deleteChat(
-    chat: Chat,
-    project: Project
-  ): void {
-
+  deleteChat(chat: Chat, project: Project): void {
     if (this.deletingChat()) {
       return;
     }
@@ -544,15 +502,13 @@ export class Dashboard {
     this.deletingChat.set(true);
 
     this.chatService.deleteChat(chat.id).subscribe({
-
       next: () => {
-
         this.projectChats.update((current) => {
           const chats = current[project.id] ?? [];
 
           return {
             ...current,
-            [project.id]: chats.filter(item => item.id !== chat.id)
+            [project.id]: chats.filter((item) => item.id !== chat.id),
           };
         });
 
@@ -568,7 +524,7 @@ export class Dashboard {
         console.error('Failed to delete chat', error);
 
         this.deletingChat.set(false);
-      }
+      },
     });
   }
 
@@ -577,7 +533,6 @@ export class Dashboard {
   // ============================================================
 
   deleteNormalChat(chat: Chat): void {
-
     if (this.deletingChat()) {
       return;
     }
@@ -591,12 +546,8 @@ export class Dashboard {
     this.deletingChat.set(true);
 
     this.chatService.deleteChat(chat.id).subscribe({
-
       next: () => {
-
-        this.normalChats.update((chats) =>
-          chats.filter(item => item.id !== chat.id)
-        );
+        this.normalChats.update((chats) => chats.filter((item) => item.id !== chat.id));
 
         if (this.selectedChat()?.id === chat.id) {
           this.selectedChat.set(null);
@@ -611,7 +562,7 @@ export class Dashboard {
         console.error('Failed to delete chat', error);
 
         this.deletingChat.set(false);
-      }
+      },
     });
   }
 
@@ -620,7 +571,6 @@ export class Dashboard {
   // ============================================================
 
   createProject(): void {
-
     if (this.creatingProject()) {
       return;
     }
@@ -633,43 +583,36 @@ export class Dashboard {
 
     this.creatingProject.set(true);
 
-    this.projectService
-      .createProject(name.trim())
-      .subscribe({
+    this.projectService.createProject(name.trim()).subscribe({
+      next: (project) => {
+        this.projects.update((projects) => [project, ...projects]);
 
-        next: (project) => {
+        // A new project has no chats: select it with a blank conversation.
+        this.selectedProject.set(project);
+        this.selectedChat.set(null);
+        this.messages.set([]);
+        this.messageInput.set('');
 
-          this.projects.update((projects) => [
-            project,
-            ...projects
-          ]);
+        this.expandedProjects.update((projects) => {
+          const next = new Set(projects);
+          next.add(project.id);
+          return next;
+        });
 
-          // A new project has no chats: select it with a blank conversation.
-          this.selectedProject.set(project);
-          this.selectedChat.set(null);
-          this.messages.set([]);
-          this.messageInput.set('');
+        this.projectChats.update((current) => ({
+          ...current,
+          [project.id]: [],
+        }));
 
-          this.expandedProjects.update((projects) => {
-            const next = new Set(projects);
-            next.add(project.id);
-            return next;
-          });
+        this.creatingProject.set(false);
+      },
 
-          this.projectChats.update((current) => ({
-            ...current,
-            [project.id]: []
-          }));
+      error: (error) => {
+        console.error('Failed to create project', error);
 
-          this.creatingProject.set(false);
-        },
-
-        error: (error) => {
-          console.error('Failed to create project', error);
-
-          this.creatingProject.set(false);
-        }
-      });
+        this.creatingProject.set(false);
+      },
+    });
   }
 
   // ============================================================
@@ -677,23 +620,24 @@ export class Dashboard {
   // ============================================================
 
   renderAssistantMessage(message: ChatMessage) {
-    const content =
-      message.content?.content?.[0]?.text
-      ?? message.content
-      ?? '';
+    const content = message.content?.content?.[0]?.text ?? message.content ?? '';
 
     return this.markdownRenderer.render(content);
   }
 
   handleMarkdownClick(event: Event): void {
-  this.markdownRenderer.handleClick(event);
-}
+    this.markdownRenderer.handleClick(event);
+  }
 
   // ============================================================
   // Sidebar
   // ============================================================
 
   toggleSidebar(): void {
-    this.sidebarOpen.update(open => !open);
+    this.sidebarOpen.update((open) => !open);
+  }
+
+  logout() {
+     this.keyclaokService.logout()
   }
 }

@@ -1,16 +1,18 @@
-<div class="flex h-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased selection:bg-teal-300/20">
+<div
+  class="flex h-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased selection:bg-teal-300/20"
+>
   <!-- ===================== SIDEBAR ===================== -->
   @if (sidebarOpen()) {
     <aside class="flex w-[272px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0c0f]">
       <!-- Brand -->
       <div class="flex h-14 items-center justify-between px-4">
         <div class="flex items-center gap-2.5">
-          <div
-            class="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-bold text-zinc-950"
-          >
-            S
-          </div>
-          <span class="text-[15px] font-semibold tracking-tight">Sivaxi AI</span>
+          <img
+            src="icons/icon-light.png"
+            alt="Vixi AI"
+            class="h-7 w-7 rounded-lg object-contain bg-white"
+          />
+          <span class="text-[15px] font-semibold tracking-tight">Vixi AI</span>
         </div>
 
         <button
@@ -20,7 +22,13 @@
           title="Close sidebar"
           aria-label="Close sidebar"
         >
-          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <svg
+            class="h-[18px] w-[18px]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+          >
             <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
             <path stroke-linecap="round" d="M9.5 4.5v15" />
           </svg>
@@ -34,7 +42,13 @@
           (click)="startGeneralChat()"
           class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-200 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
         >
-          <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="h-4 w-4 text-zinc-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
           </svg>
           New chat
@@ -55,7 +69,13 @@
               title="Create project"
               aria-label="Create project"
             >
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
               </svg>
             </button>
@@ -82,7 +102,9 @@
                   <!-- Project row -->
                   <div
                     class="group flex items-center rounded-lg transition hover:bg-white/[0.04]"
-                    [class.bg-white/[0.06]]="selectedProject()?.id === project.id && !selectedChat()"
+                    [class.bg-white/[0.06]]="
+                      selectedProject()?.id === project.id && !selectedChat()
+                    "
                   >
                     <button
                       type="button"
@@ -117,7 +139,13 @@
                       title="New chat in this project"
                       aria-label="New chat in this project"
                     >
-                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
                       </svg>
                     </button>
@@ -154,8 +182,18 @@
                             title="Delete chat"
                             aria-label="Delete chat"
                           >
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-7 0v14m6-14v14M5 6l1 15h12l1-15" />
+                            <svg
+                              class="h-3.5 w-3.5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M3 6h18M8 6V4h8v2m-7 0v14m6-14v14M5 6l1 15h12l1-15"
+                              />
                             </svg>
                           </button>
                         </div>
@@ -180,20 +218,28 @@
               <div class="h-8 animate-pulse rounded-lg bg-white/[0.04]"></div>
             </div>
           } @else if (normalChats().length === 0) {
-            <div class="px-2 py-2 text-[13px] text-zinc-600">Chats outside projects appear here</div>
+            <div class="px-2 py-2 text-[13px] text-zinc-600">
+              Chats outside projects appear here
+            </div>
           } @else {
             <div class="space-y-0.5">
               @for (chat of normalChats(); track chat.id) {
                 <div
                   class="group/chat flex items-center rounded-lg transition hover:bg-white/[0.04]"
-                  [class.bg-white/[0.07]]="selectedChat()?.id === chat.id && selectedProject() === null"
+                  [class.bg-white/[0.07]]="
+                    selectedChat()?.id === chat.id && selectedProject() === null
+                  "
                 >
                   <button
                     type="button"
                     (click)="selectNormalChat(chat)"
                     class="min-w-0 flex-1 truncate rounded-lg px-2 py-1.5 text-left text-[13.5px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300/60"
-                    [class.text-zinc-100]="selectedChat()?.id === chat.id && selectedProject() === null"
-                    [class.text-zinc-500]="!(selectedChat()?.id === chat.id && selectedProject() === null)"
+                    [class.text-zinc-100]="
+                      selectedChat()?.id === chat.id && selectedProject() === null
+                    "
+                    [class.text-zinc-500]="
+                      !(selectedChat()?.id === chat.id && selectedProject() === null)
+                    "
                   >
                     {{ chat.title || 'New chat' }}
                   </button>
@@ -205,8 +251,18 @@
                     title="Delete chat"
                     aria-label="Delete chat"
                   >
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-7 0v14m6-14v14M5 6l1 15h12l1-15" />
+                    <svg
+                      class="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 6h18M8 6V4h8v2m-7 0v14m6-14v14M5 6l1 15h12l1-15"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -214,6 +270,32 @@
             </div>
           }
         </section>
+      </div>
+      <hr class="text-gray-500" />
+      <!-- Sidebar Footer Container (Place this at the very bottom of your sidebar HTML) -->
+      <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          (click)="logout()"
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all duration-200 group"
+        >
+          <!-- Logout Icon -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+
+          <span>Logout</span>
+        </button>
       </div>
     </aside>
   }
@@ -230,7 +312,13 @@
           title="Open sidebar"
           aria-label="Open sidebar"
         >
-          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <svg
+            class="h-[18px] w-[18px]"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+          >
             <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
             <path stroke-linecap="round" d="M9.5 4.5v15" />
           </svg>
@@ -240,11 +328,19 @@
       <div class="flex min-w-0 items-center gap-2 text-sm">
         @if (selectedProject()) {
           <span class="truncate text-zinc-400">{{ selectedProject()?.name }}</span>
-          <svg class="h-3.5 w-3.5 shrink-0 text-zinc-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg
+            class="h-3.5 w-3.5 shrink-0 text-zinc-700"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         }
-        <span class="truncate font-medium text-zinc-200">{{ selectedChat()?.title || 'New chat' }}</span>
+        <span class="truncate font-medium text-zinc-200">{{
+          selectedChat()?.title || 'New chat'
+        }}</span>
       </div>
     </header>
 
@@ -252,11 +348,11 @@
       <!-- Empty state -->
       @if (!selectedChat() && messages().length === 0) {
         <div class="flex flex-1 flex-col items-center justify-center px-6 pb-10">
-          <div
-            class="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-lg font-bold text-zinc-950 shadow-[0_0_0_6px_rgba(255,255,255,0.04)]"
-          >
-            S
-          </div>
+          <img
+            src="icons/icon-light.png"
+            alt="Sivaxi AI"
+            class="h-7 w-7 rounded-lg object-contain bg-white"
+          />
 
           <h1 class="text-center text-[28px] font-semibold tracking-tight text-zinc-100">
             What are you working on?
@@ -265,7 +361,8 @@
           <p class="mt-2 max-w-sm text-center text-sm leading-6 text-zinc-500">
             @if (selectedProject()) {
               This chat will be saved in
-              <span class="text-zinc-300">{{ selectedProject()?.name }}</span>.
+              <span class="text-zinc-300">{{ selectedProject()?.name }}</span
+              >.
             } @else {
               Ask anything, or pick a project to keep related chats together.
             }
@@ -279,7 +376,9 @@
           <div class="mx-auto w-full max-w-[720px] px-5 pb-6 pt-4">
             @if (loadingMessages()) {
               <div class="flex items-center justify-center py-16">
-                <div class="h-5 w-5 animate-spin rounded-full border-2 border-zinc-800 border-t-zinc-300"></div>
+                <div
+                  class="h-5 w-5 animate-spin rounded-full border-2 border-zinc-800 border-t-zinc-300"
+                ></div>
               </div>
             } @else {
               <div class="space-y-7">
@@ -296,17 +395,17 @@
 
                   @if (message.role === 'assistant') {
                     <div class="flex items-start gap-3.5">
-                      <div
-                        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[11px] font-bold text-zinc-950"
-                      >
-                        S
-                      </div>
+                      <img
+                        src="icons/icon-light.png"
+                        alt="Sivaxi AI"
+                        class="h-6 w-6 rounded-lg object-contain bg-white"
+                      />
 
                       <div
-  class="chat-prose min-w-0 flex-1 text-[14.5px] leading-7 text-zinc-300"
-  [innerHTML]="renderAssistantMessage(message)"
-  (click)="handleMarkdownClick($event)"
-></div>
+                        class="chat-prose min-w-0 flex-1 text-[14.5px] leading-7 text-zinc-300"
+                        [innerHTML]="renderAssistantMessage(message)"
+                        (click)="handleMarkdownClick($event)"
+                      ></div>
                     </div>
                   }
                 }
@@ -321,8 +420,12 @@
 
                     <div class="flex items-center gap-1 pt-2.5" aria-label="Sivaxi AI is typing">
                       <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500"></span>
-                      <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500 [animation-delay:150ms]"></span>
-                      <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500 [animation-delay:300ms]"></span>
+                      <span
+                        class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500 [animation-delay:150ms]"
+                      ></span>
+                      <span
+                        class="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-500 [animation-delay:300ms]"
+                      ></span>
                     </div>
                   </div>
                 }
@@ -357,14 +460,20 @@
               title="Send message"
               aria-label="Send message"
             >
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.25"
+              >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7" />
               </svg>
             </button>
           </div>
 
           <p class="mt-2.5 text-center text-xs text-zinc-600">
-            Sivaxi AI can make mistakes. Check important information.
+            Vixi AI can make mistakes. Check important information.
           </p>
         </div>
       </div>
