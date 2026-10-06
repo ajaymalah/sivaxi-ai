@@ -1,12 +1,12 @@
 export const environment = {
-  production: false,
+  production: true,
 
-  apiUrl: 'http://localhost:8000',
+  apiUrl: 'https://api.sivaxi.com',
 
   keycloak: {
     url: 'https://auth.sivaxi.com',
-    realm: 'ai',
-    clientId: 'sivaxi-ai'
+    realm: 'portfolio',
+    clientId: 'portfolio'
   },
 
   firebase: {

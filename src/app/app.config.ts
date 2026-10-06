@@ -18,12 +18,15 @@ import {
 } from 'keycloak-angular';
 
 import { routes } from './app.routes';
+import { environment } from './environments/environment';
 
 const urlCondition = createInterceptorCondition<{
   urlPattern: RegExp;
   bearerPrefix?: string;
 }>({
-  urlPattern: /^http:\/\/localhost:8000\/.*/,
+  urlPattern: new RegExp(
+    `^${environment.apiUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/.*`
+  ),
   bearerPrefix: 'Bearer'
 });
 
@@ -46,9 +49,9 @@ export const appConfig: ApplicationConfig = {
 
     provideKeycloak({
       config: {
-        url: 'https://auth.sivaxi.com',
-        realm: 'ai',
-        clientId: 'sivaxi-ai'
+        url: environment.keycloak.url,
+        realm: environment.keycloak.realm,
+        clientId: environment.keycloak.clientId
       },
 
       initOptions: {

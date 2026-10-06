@@ -2,6 +2,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment.prod';
 
 export interface Chat {
   id: string;
@@ -48,7 +49,7 @@ export class ChatService {
 
   private readonly http = inject(HttpClient);
 
-  private readonly API_URL = 'http://localhost:8000';
+  private readonly API_URL = environment.apiUrl;
 
   getChats(projectId?: string | null): Observable<Chat[]> {
 
